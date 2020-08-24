@@ -5,13 +5,17 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
+import com.springproject.osworks.domain.ValidationGroups;
+
 import javax.persistence.GenerationType;
 
 @Entity
 public class Cliente {
 	
-	@Id 
+	@Id @NotNull(groups = ValidationGroups.ClienteId.class)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	

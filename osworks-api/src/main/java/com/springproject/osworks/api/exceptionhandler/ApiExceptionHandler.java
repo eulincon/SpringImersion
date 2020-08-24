@@ -1,8 +1,11 @@
 package com.springproject.osworks.api.exceptionhandler;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +21,8 @@ import com.springproject.osworks.domain.exception.NegocioException;
 
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler{
-	//@Autowired
-	//private MessageSource messageSource;
+	@Autowired
+	private MessageSource messageSource;
 	
 	@ExceptionHandler(NegocioException.class)
 	public ResponseEntity<Object> handleNegocio(NegocioException ex, WebRequest request) {
@@ -27,7 +30,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler{
 		var problema = new Problema();
 		problema .setStatus(status.value());
 		problema.setTitulo(ex.getMessage());
-		problema.setDataHora(LocalDateTime.now());
+		problema.setDataHora(OffsetDateTime.now());
 		
 		return handleExceptionInternal(ex, problema, new HttpHeaders(), status, request);
 	
@@ -41,7 +44,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler{
 		
 		for (ObjectError error : ex.getBindingResult().getAllErrors()) {
 			String nome = ((FieldError) error).getField();
-			String mensagem = error.getDefaultMessage();
+//			String mensagem = error.getDefaultMessage();
+			String mensagem = messageSource.getMessage(error,LocaleContextHolder.getLocale());
 			
 			campos.add(new Problema.Campo(nome, mensagem));
 		}
@@ -50,7 +54,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler{
 		problema.setStatus(status.value());
 		problema.setTitulo("Um ou mais campos estão inválidos. Preencha corretamente e tente novamente.");
 //		problema.setTitulo(ex.getBindingResult().getFieldError().getDefaultMessage());
-		problema.setDataHora(LocalDateTime.now());
+		problema.setDataHora(OffsetDateTime.now());
 		problema.setCampos(campos);
 		
 //		return super.handleMethodArgumentNotValid(ex, headers, status, request);
