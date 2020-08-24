@@ -2,6 +2,8 @@ package com.springproject.osworks.domain.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -10,41 +12,43 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.groups.ConvertGroup;
-import javax.validation.groups.Default;
+//import javax.validation.groups.ConvertGroup;
+//import javax.validation.groups.Default;
+import javax.persistence.OneToMany;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import com.springproject.osworks.domain.ValidationGroups;
+import com.springproject.osworks.domain.exception.NegocioException;
+
+//import com.fasterxml.jackson.annotation.JsonProperty;
+//import com.fasterxml.jackson.annotation.JsonProperty.Access;
+//import com.springproject.osworks.domain.ValidationGroups;
 
 @Entity
 public class OrdemServico {
-	
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
-	@NotNull @Valid
-	@ManyToOne @ConvertGroup(from = Default.class, to = ValidationGroups.ClienteId.class)
+
+	@ManyToOne
+//	@ConvertGroup(from = Default.class, to = ValidationGroups.ClienteId.class)
 	private Cliente cliente;
-	
-	@NotBlank
+
 	private String descricao;
-	
-	@NotNull
+
 	private BigDecimal preco;
-	
-	@JsonProperty(access = Access.READ_ONLY)
+
+//	@JsonProperty(access = Access.READ_ONLY)
 	@Enumerated(EnumType.STRING)
 	private StatusOrdemServico status;
 
-	@JsonProperty(access = Access.READ_ONLY)
+//	@JsonProperty(access = Access.READ_ONLY)
 	private OffsetDateTime dataAbertura;
-	
-	@JsonProperty(access = Access.READ_ONLY)
+
+//	@JsonProperty(access = Access.READ_ONLY)
 	private OffsetDateTime dataFinalizacao;
+
+	@OneToMany(mappedBy = "ordemServico")
+	private List<Comentario> comentarios = new ArrayList<>();
 
 	public Long getId() {
 		return id;
@@ -102,6 +106,14 @@ public class OrdemServico {
 		this.dataFinalizacao = dataFinalizacao;
 	}
 
+	public List<Comentario> getComentarios() {
+		return comentarios;
+	}
+
+	public void setComentarios(List<Comentario> comentarios) {
+		this.comentarios = comentarios;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -125,6 +137,24 @@ public class OrdemServico {
 		} else if (!id.equals(other.id))
 			return false;
 		return true;
+	}
+	
+	public boolean podeSerFinalizada() {
+		return StatusOrdemServico.ABERTA.equals(getStatus());
+	}
+	
+	public boolean naoPodeSerFinalizada() {
+		return !podeSerFinalizada();
+	}
+
+	public void finalizar() {
+		
+		if (naoPodeSerFinalizada()) {
+			throw new NegocioException("Ordem de serviço não finalizada.");
+		}
+		
+		setStatus(StatusOrdemServico.FINALIZADA);
+		setDataFinalizacao(OffsetDateTime.now());
 	}
 
 }
